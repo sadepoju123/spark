@@ -11,6 +11,7 @@ import org.apache.spark.sql.functions.split
 import org.apache.spark.sql.functions.max
 import org.apache.spark.sql.functions.rank
 import org.apache.spark.sql.functions.broadcast
+import org.apache.spark.sql.functions.count
 
 object SocialMediaDataProcessing extends App {
   
@@ -54,7 +55,10 @@ val rankdf = df.withColumn("rank_val", rank().over(winRank))
  val joinDF = rankdf.join(broadcast(df), df("max_val")===rankdf("new_ds"))
                     .select(df("source"),df("datasize"),df("src_date"),rankdf("HighestDataSource"))
                    
+ joinDF.createTempView("joindf_vw")
  
-  joinDF.show(false)             
+ val df4 = spark.sql("select * from joindf_vw").groupBy("source", "src_date").agg(count("*"))
+ 
+  df4.collect()          
 
 }
